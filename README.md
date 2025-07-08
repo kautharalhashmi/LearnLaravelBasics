@@ -1,61 +1,173 @@
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
 
-## About Laravel
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+# Laravel Routing 
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Laravel routing controls what happens when someone visits a URL in your app.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 1. What is Routing?
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+Routing decides **which code runs** for each URL.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**Example:**
+```php
+Route::get('/hello', function () {
+    return 'Hello, World!';
+});
+```
 
-## Laravel Sponsors
+## 2. Route Methods
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+##### Define how users interact with your app.
 
-### Premium Partners
+###### GET – Show data
+###### POST – Submit data
+###### PUT – Update data
+###### DELETE – Delete data
+###### PATCH – Partially update data
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+**Example:**
+```php
+Route::get('/users', function () {
+    return 'List of users';
+});
 
-## Contributing
+Route::post('/users', function () {
+    return 'Create user';
+});
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Route::put('/users/{id}', function ($id) {
+    return 'Update user ' . $id;
+});
 
-## Code of Conduct
+Route::delete('/users/{id}', function ($id) {
+    return 'Delete user ' . $id;
+});
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```
 
-## Security Vulnerabilities
+## 3. Route Parameters
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+##### Required parameter:
+**Example:**
+```php
+Route::get('/posts/{id}', function ($id) {
+    return 'Post ID: ' . $id;
+});
+```
+###### Visiting /posts/5 ➜ Post ID: 5
 
-## License
+## 4. Named Routes
+##### Name your routes to generate URLs or redirects.
+```php
+Route::get('/dashboard', function () {
+    return 'Dashboard';
+})->name('dashboard');
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```
+
+```php
+// Generate URL:
+$url = route('dashboard');
+
+```
+```php
+// Redirect:
+return redirect()->route('dashboard');
+
+```
+
+## 5. Route Groups
+##### Group routes to share settings.
+**With prefix:**
+```php
+Route::prefix('admin')->group(function () {
+    Route::get('/users', function () {
+        return 'Admin Users';
+    });
+    Route::get('/settings', function () {
+        return 'Admin Settings';
+    });
+});
+```
+##### Visiting /admin/users shows Admin Users.
+
+**With middleware:**
+```php
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', function () {
+        return 'Your Profile';
+    });
+});
+```
+## 6. Route Middleware
+##### Add extra checks like authentication.
+```php
+Route::get('/dashboard', function () {
+    return 'Dashboard';
+})->middleware('auth');
+
+```
+
+## 7. Route Fallback
+##### Show a custom page when no route matches.
+```php
+Route::fallback(function () {
+    return 'Sorry, page not found.';
+});
+```
+## 8. Route Model Binding
+##### Automatically load models.
+```php
+Route::get('/posts/{post}', function (App\Models\Post $post) {
+    return $post->title;
+});
+
+```
+##### Visiting /posts/1 loads the Post with ID 1.
+
+
+## 9. Controllers
+##### Use controllers instead of closures.
+```php
+use App\Http\Controllers\PostController;
+
+Route::get('/posts', [PostController::class, 'index']);
+Route::post('/posts', [PostController::class, 'store']);
+Route::get('/posts/{id}', [PostController::class, 'show']);
+```
+
+## 10. Resource Routes
+##### Create all CRUD routes automatically.
+```php
+Route::resource('photos', PhotoController::class);
+```
+###### Creates:
+###### GET /photos
+###### GET /photos/create
+###### POST /photos
+###### GET /photos/{photo}
+###### GET /photos/{photo}/edit
+###### PUT/PATCH /photos/{photo}
+###### DELETE /photos/{photo}
+
+
+## 11. Redirect Routes
+##### Redirect old URLs.
+```php
+Route::redirect('/old-page', '/new-page');
+```
+## 12. View Routes
+##### Return a view directly.
+```php
+Route::view('/welcome', 'welcome');
+
+```
+##### This shows resources/views/welcome.blade.php.
+
+
+
