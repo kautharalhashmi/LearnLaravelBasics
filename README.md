@@ -2,172 +2,232 @@
 
 
 
+#  Laravel HTTP Requests 
 
-# Laravel Routing 
+Laravel provides a powerful `Illuminate\Http\Request` object to work with incoming HTTP requests. It allows you to access input, query parameters, headers, files, cookies, and more.
 
-Laravel routing controls what happens when someone visits a URL in your app.
+
+
+##  Accessing Request Data
+
+### Inject Request Object
+
+```php
+use Illuminate\Http\Request;
+
+public function store(Request $request)
+{
+    $name = $request->input('name');
+}
+````
+
+### Shortcut (in routes)
+
+```php
+Route::post('/submit', function (Request $request) {
+    return $request->input('email');
+});
+```
 
 ---
 
-## 1. What is Routing?
+##  Retrieving Input
 
-Routing decides **which code runs** for each URL.
-
-**Example:**
-```php
-Route::get('/hello', function () {
-    return 'Hello, World!';
-});
-```
-
-## 2. Route Methods
-
-##### Define how users interact with your app.
-
-###### GET – Show data
-###### POST – Submit data
-###### PUT – Update data
-###### DELETE – Delete data
-###### PATCH – Partially update data
-
-**Example:**
-```php
-Route::get('/users', function () {
-    return 'List of users';
-});
-
-Route::post('/users', function () {
-    return 'Create user';
-});
-
-Route::put('/users/{id}', function ($id) {
-    return 'Update user ' . $id;
-});
-
-Route::delete('/users/{id}', function ($id) {
-    return 'Delete user ' . $id;
-});
-
-```
-
-## 3. Route Parameters
-
-##### Required parameter:
-**Example:**
-```php
-Route::get('/posts/{id}', function ($id) {
-    return 'Post ID: ' . $id;
-});
-```
-###### Visiting /posts/5 ➜ Post ID: 5
-
-## 4. Named Routes
-##### Name your routes to generate URLs or redirects.
-```php
-Route::get('/dashboard', function () {
-    return 'Dashboard';
-})->name('dashboard');
-
-```
+### Get All Input
 
 ```php
-// Generate URL:
-$url = route('dashboard');
-
+$request->all();
 ```
+
+### Get Specific Input
+
 ```php
-// Redirect:
-return redirect()->route('dashboard');
-
+$request->input('name'); // or
+$request->name;
 ```
 
-## 5. Route Groups
-##### Group routes to share settings.
-**With prefix:**
+### Default Value
+
 ```php
-Route::prefix('admin')->group(function () {
-    Route::get('/users', function () {
-        return 'Admin Users';
-    });
-    Route::get('/settings', function () {
-        return 'Admin Settings';
-    });
-});
+$request->input('name', 'Guest');
 ```
-##### Visiting /admin/users shows Admin Users.
 
-**With middleware:**
+### Nested Input
+
 ```php
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', function () {
-        return 'Your Profile';
-    });
-});
+$request->input('user.name');
 ```
-## 6. Route Middleware
-##### Add extra checks like authentication.
+
+---
+
+##  Query Parameters
+
 ```php
-Route::get('/dashboard', function () {
-    return 'Dashboard';
-})->middleware('auth');
-
+$request->query('page', 1);
 ```
 
-## 7. Route Fallback
-##### Show a custom page when no route matches.
+Example: `/users?page=2`
+
+---
+
+##  Retrieving Route Parameters
+
 ```php
-Route::fallback(function () {
-    return 'Sorry, page not found.';
-});
+public function show(Request $request, $id)
+{
+    // OR
+    $id = $request->route('id');
+}
 ```
-## 8. Route Model Binding
-##### Automatically load models.
+
+---
+
+##  Checking If Input Exists
+
 ```php
-Route::get('/posts/{post}', function (App\Models\Post $post) {
-    return $post->title;
-});
-
+$request->has('email');         // true/false
+$request->filled('email');      // not empty
+$request->missing('token');     // true if not present
 ```
-##### Visiting /posts/1 loads the Post with ID 1.
 
+---
 
-## 9. Controllers
-##### Use controllers instead of closures.
+##  Validating Requests
+
 ```php
-use App\Http\Controllers\PostController;
-
-Route::get('/posts', [PostController::class, 'index']);
-Route::post('/posts', [PostController::class, 'store']);
-Route::get('/posts/{id}', [PostController::class, 'show']);
+$request->validate([
+    'title' => 'required|string|max:255',
+    'body' => 'required',
+]);
 ```
 
-## 10. Resource Routes
-##### Create all CRUD routes automatically.
+If validation fails, Laravel redirects back with errors.
+
+---
+
+##  File Uploads
+
+### Get Uploaded File
+
 ```php
-Route::resource('photos', PhotoController::class);
+$request->file('photo');
 ```
-###### Creates:
-###### GET /photos
-###### GET /photos/create
-###### POST /photos
-###### GET /photos/{photo}
-###### GET /photos/{photo}/edit
-###### PUT/PATCH /photos/{photo}
-###### DELETE /photos/{photo}
 
+### Check If File Exists
 
-## 11. Redirect Routes
-##### Redirect old URLs.
 ```php
-Route::redirect('/old-page', '/new-page');
+$request->hasFile('photo');
 ```
-## 12. View Routes
-##### Return a view directly.
-```php
-Route::view('/welcome', 'welcome');
 
+### Validate and Store
+
+```php
+$request->validate([
+    'photo' => 'required|image|max:2048',
+]);
+
+$request->file('photo')->store('photos');
 ```
-##### This shows resources/views/welcome.blade.php.
+
+---
+
+##  Cookies
+
+### Retrieve
+
+```php
+$request->cookie('name');
+```
+
+### Set Cookie (in response)
+
+```php
+return response('Hello')->cookie('name', 'John', 60);
+```
+
+---
+
+##  Headers
+
+### Get a Header
+
+```php
+$request->header('Content-Type');
+```
+
+### Set a Header
+
+```php
+return response('OK')->header('X-Custom', '123');
+```
+
+---
+
+##  CSRF Token
+
+```php
+$token = $request->input('_token');
+```
+
+Usually added automatically in forms via `@csrf` in Blade.
+
+---
+
+##  Request Type Checks
+
+```php
+$request->isMethod('post');      // Check method
+$request->is('admin/*');         // URI match
+$request->ajax();                // Is AJAX?
+$request->wantsJson();           // Wants JSON?
+```
+
+---
+
+##  Authorization in Requests
+
+```php
+public function authorize(): bool
+{
+    return auth()->user()->isAdmin();
+}
+```
+
+Used in **Form Request** classes for checking permissions.
+
+---
+
+##  Sanitizing Inputs (via middleware or manually)
+
+Example to trim all inputs:
+
+```php
+$request->merge([
+    'name' => trim($request->name),
+]);
+```
+
+Or use Laravel middleware like `TrimStrings`.
+
+---
+
+##  Summary Table
+
+| Feature      | Example                      |
+| ------------ | ---------------------------- |
+| Input Value  | `$request->input('email')`   |
+| All Inputs   | `$request->all()`            |
+| Query Param  | `$request->query('page')`    |
+| File Upload  | `$request->file('avatar')`   |
+| Route Param  | `$request->route('id')`      |
+| Cookie Value | `$request->cookie('token')`  |
+| Header Value | `$request->header('Accept')` |
+| Validate     | `$request->validate([...])`  |
+| Method Check | `$request->isMethod('post')` |
+| URI Match    | `$request->is('admin/*')`    |
+
+---
+
 
 
 
